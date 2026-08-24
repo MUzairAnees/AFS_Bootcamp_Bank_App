@@ -21,9 +21,9 @@ def main():
     if isinstance(login_res, Admin):
         admin_dashboard()
     elif isinstance(login_res, Customer):
-        customer_dashboard()
+        customer_dashboard(login_res)
     else:
-        print("Log in failed. Please try again.")
+        print("\nLog in failed. Please try again.")
         # moves to goodbye()
 
     goodbye()
@@ -55,10 +55,10 @@ def login() -> User | None:
     return None
 
 def admin_dashboard():
-    print("Hello admin.")
+    print("\nHello Admin.")
 
-def customer_dashboard():
-    print("Hello cust.")
+def customer_dashboard(customer: Customer):
+    print(f"\nHello {customer.name}!")
 
 def goodbye():
     '''
