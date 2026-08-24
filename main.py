@@ -7,11 +7,9 @@ def main():
 
     Purpose:
     1) Welcomes user -> welcome().
-
     2) Prompts for authorization -> login().
     2.a) If authorization returns a specific val(stored in check var)
     -> activates the related x_dashboard() -> x == admin or cust.
-
     3) Exits program -> goodbye().
     '''
 
@@ -31,9 +29,20 @@ def main():
     goodbye()
 
 def welcome():
+    '''
+    Welcome():
+    Prints welcome message
+    '''
+
     print("AFS Bank welcomes you!")
 
 def login() -> User | None:
+    '''
+    Login():
+    Asks user for username and password.
+    Checks if username and password are in the system.
+    Returns the User object if true else returns None
+    '''
     username = input("Please enter your username: ")
     password = input("Please enter your password: ")
 
@@ -52,6 +61,11 @@ def customer_dashboard():
     print("Hello cust.")
 
 def goodbye():
+    '''
+    Goodbye():
+    Prints goodbye message.
+    Final call of the program.
+    '''
     print("Thank you for using AFS Bank!")
 
 if __name__ == '__main__':
