@@ -23,7 +23,7 @@ def main():
     elif isinstance(login_res, Customer):
         customer_dashboard(login_res)
     else:
-        print("\nLog in failed. Please try again.")
+        print("\nLog in failed. Please try again later.")
         # moves to goodbye()
 
     goodbye()
@@ -66,7 +66,7 @@ def goodbye():
     Prints goodbye message.
     Final call of the program.
     '''
-    print("Thank you for using AFS Bank!")
+    print("\nThank you for using AFS Bank!")
 
 if __name__ == '__main__':
     main()
