@@ -1,3 +1,5 @@
+from bankapp.user import User, Customer, Admin, USERS
+
 def main():
     '''
     Main():
@@ -18,12 +20,12 @@ def main():
     #login() -> contains login logic and stores results in var
     login_res = login()
 
-    if login_res == "admin":
+    if isinstance(login_res, Admin):
         admin_dashboard()
-    elif login_res == "customer":
+    elif isinstance(login_res, Customer):
         customer_dashboard()
     else:
-        print("Log in failed.")
+        print("Log in failed. Please try again.")
         # moves to goodbye()
 
     goodbye()
@@ -31,21 +33,26 @@ def main():
 def welcome():
     print("AFS Bank welcomes you!")
 
-def goodbye():
-    print("Thank you for using AFS Bank! Have a nice day!")
+def login() -> User | None:
+    username = input("Please enter your username: ")
+    password = input("Please enter your password: ")
 
-def login() -> str:
-    print("Please enter your username and password.")
+    #return the object
+    for user in USERS:
+        if user.username == username and user.password == password:
+            return user
 
-    #return "wrong login"
-    #return "customer"
-    return "admin"
+    #or return None
+    return None
 
 def admin_dashboard():
     print("Hello admin.")
 
 def customer_dashboard():
     print("Hello cust.")
+
+def goodbye():
+    print("Thank you for using AFS Bank!")
 
 if __name__ == '__main__':
     main()
