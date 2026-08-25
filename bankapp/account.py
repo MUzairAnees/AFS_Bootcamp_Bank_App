@@ -64,7 +64,6 @@ class CheckingAccount(Account):
     It doesn't have its own specific attributes.
     Allows withdrawal as long as the amount is not negative and balance after withdrawal would be more than -500 dollars.
     '''
-
     OVERDRAFT_LIMIT = Decimal("500")
 
     def withdraw(self, amount: Decimal):
