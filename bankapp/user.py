@@ -38,7 +38,11 @@ class Customer(User):
         classname = self.__class__.__name__
         return f"{classname}({self.customer_id}, {self.name}, {self.email}, {self.username})"
 
-
+'''
+USERS = []:
+It is supposed to be the hardcoded user objects of the application.
+Here we have 1 admin user object and 3 customer user objects.
+'''
 USERS = [
     Admin("admin1", "admin123!"),
     Customer(97, "Uzair", "Uzair@outlook.com",
