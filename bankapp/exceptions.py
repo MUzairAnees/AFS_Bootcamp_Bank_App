@@ -1,6 +1,6 @@
 class BankError(Exception):
     '''
-    Bank Error(Exception):
+    BankError(Exception):
     -Whenever something goes wrong/any Exception occurs within the banking app, it is expressed as a BankError.
     '''
 
