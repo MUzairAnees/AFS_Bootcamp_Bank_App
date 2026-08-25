@@ -40,6 +40,7 @@ class Customer(User):
 
 '''
 USERS = []:
+Registered Seed Data:
 It is supposed to be the hardcoded user objects of the application.
 Here we have 1 admin user object and 3 customer user objects.
 '''
