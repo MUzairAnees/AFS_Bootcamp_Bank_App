@@ -19,7 +19,7 @@ def main():
     login_res = login()
 
     if isinstance(login_res, Admin):
-        admin_dashboard()
+        admin_dashboard(login_res)
     elif isinstance(login_res, Customer):
         customer_dashboard(login_res)
     else:
@@ -54,8 +54,8 @@ def login() -> User | None:
     #or return None
     return None
 
-def admin_dashboard():
-    print("\nHello Admin.")
+def admin_dashboard(admin: Admin):
+    print(f"\nHello {admin.username}.")
 
 def customer_dashboard(customer: Customer):
     print(f"\nHello {customer.name}!")
