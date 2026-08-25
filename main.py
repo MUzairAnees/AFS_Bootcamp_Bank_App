@@ -55,9 +55,17 @@ def login() -> User | None:
     return None
 
 def admin_dashboard(admin: Admin):
+    '''
+    AdminDashboard():
+    Contains a menu of what the admin can do.
+    '''
     print(f"\nHello {admin.username}.")
 
 def customer_dashboard(customer: Customer):
+    '''
+    CustomerDashboard():
+    Contains a menu of what the customer can do.
+    '''
     print(f"\nHello {customer.name}!")
 
 def goodbye():
