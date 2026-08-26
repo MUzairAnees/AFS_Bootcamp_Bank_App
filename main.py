@@ -1,9 +1,7 @@
-from unittest import skip
-
 from bankapp.bank import Bank, create_bank
 from bankapp.user import User, Customer, Admin
 from bankapp.account import *
-from bankapp.exceptions import *
+from bankapp.exceptions import BankError, NotFoundError
 from decimal import Decimal, InvalidOperation
 
 def main():
@@ -93,14 +91,14 @@ def admin_dashboard(bank: Bank, admin: Admin):
 
             case "3":
                 #Adds customer based on customerID -> only if customerID doesn't exist.
-                customer_id = int(input("Please enter customer id: "))
+                customer_id = read_int("Please enter customer id: ")
                 try:
                     bank.find_customer(customer_id)
                     print("Customer ID already exists.")
                 except NotFoundError:
                     name = input("Please enter customer name: ")
                     email = input("Please enter customer email: ")
-                    branch_id = int(input("Please enter customer branch id: "))
+                    branch_id = read_int("Please enter customer branch id: ")
                     username = input("Please enter customer username: ")
                     password = input("Please enter customer password: ")
 
@@ -109,7 +107,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                     print(f"\nCustomer {name}, {customer_id} added.")
 
             case "4":
-                customer_to_delete_id = int(input("Please enter customer id: "))
+                customer_to_delete_id = read_int("Please enter customer id: ")
                 try:
                     bank.remove_customer(customer_to_delete_id)
                     print("\nCustomer deleted.")
@@ -117,7 +115,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                     print("Customer does not exist.")
 
             case "5":
-                customer_id = int(input("Please enter customer id: "))
+                customer_id = read_int("Please enter customer id: ")
                 try:
                     customer_to_update = bank.find_customer(customer_id)
                 except NotFoundError:
@@ -141,7 +139,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                             customer_to_update.email = input("Please enter new customer email: ")
                             print("\nCustomer updated.")
                         case "3":
-                            customer_to_update.branch_id = int(input("Please enter new customer branch id: "))
+                            customer_to_update.branch_id = read_int("Please enter new customer branch id: ")
                             print("\nCustomer updated.")
                         case "4":
                             customer_to_update.username = input("Please enter new customer username: ")
@@ -187,19 +185,19 @@ def customer_dashboard(bank: Bank, customer: Customer):
             case "2":
                 account_to_deposit = choose_account(customer)
                 if account_to_deposit is not None:
-                        amount = read_amount("How much would you like to deposit? ")
-                        try:
-                            account_to_deposit.deposit(amount)
-                            print(f"Deposited amount. New balance: {account_to_deposit.balance}")
-                        except ValueError as e:
-                            print(e)
+                    amount = read_amount("How much would you like to deposit? ")
+                    try:
+                        bank.deposit(account_to_deposit, amount)
+                        print(f"Deposited amount. New balance: {account_to_deposit.balance}")
+                    except ValueError as e:
+                        print(e)
 
             case "3":
                 account_to_withdraw_from = choose_account(customer)
                 if account_to_withdraw_from is not None:
                     amount = read_amount("How much would you like to withdraw? ")
                     try:
-                        account_to_withdraw_from.withdraw(amount)
+                        bank.withdraw(account_to_withdraw_from, amount)
                         print(f"Withdrew amount. New balance: {account_to_withdraw_from.balance}")
                     except (ValueError, BankError) as e:
                         print(e)
@@ -248,7 +246,7 @@ def choose_account(customer: Customer) -> Account | None:
     for account in customer.accounts:
         print(account)
 
-    chosen_account_number = int(input("\nPlease enter your account number: "))
+    chosen_account_number = read_int("\nPlease enter your account number: ")
     for account in customer.accounts:
         if account.account_number == chosen_account_number:
             return account
@@ -262,6 +260,14 @@ def read_amount(prompt: str) -> Decimal:
         try:
             return Decimal(text)
         except InvalidOperation:
+            print("Invalid input. Please try again.")
+
+def read_int(prompt: str) -> int:
+    while True:
+        text = input(prompt)
+        try:
+            return int(text)
+        except ValueError:
             print("Invalid input. Please try again.")
 
 
