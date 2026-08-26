@@ -1,6 +1,10 @@
+from unittest import skip
+
 from bankapp.bank import Bank, create_bank
 from bankapp.user import User, Customer, Admin
+from bankapp.account import *
 from bankapp.exceptions import *
+from decimal import Decimal, InvalidOperation
 
 def main():
     '''
@@ -176,18 +180,51 @@ def customer_dashboard(bank: Bank, customer: Customer):
                 if not customer.accounts:
                     print("No accounts created.")
                 else:
+                    print("\nYour accounts:")
                     for account in customer.accounts:
                         print(account)
+
             case "2":
-                print("[TODO] update a specific account object's value -> adding amount")
+                account_to_deposit = choose_account(customer)
+                if account_to_deposit is not None:
+                        amount = read_amount("How much would you like to deposit? ")
+                        try:
+                            account_to_deposit.deposit(amount)
+                            print(f"Deposited amount. New balance: {account_to_deposit.balance}")
+                        except ValueError as e:
+                            print(e)
 
             case "3":
-                print("[TODO] update a specific account object's value -> deleting amount based on account object rules")
+                account_to_withdraw_from = choose_account(customer)
+                if account_to_withdraw_from is not None:
+                    amount = read_amount("How much would you like to withdraw? ")
+                    try:
+                        account_to_withdraw_from.withdraw(amount)
+                        print(f"Withdrew amount. New balance: {account_to_withdraw_from.balance}")
+                    except (ValueError, BankError) as e:
+                        print(e)
+
             case "4":
-                print("[TODO] update a specific account object's value -> withdraw amount -> deposit amount into a specific account's value")
+                from_account = choose_account(customer)
+                if from_account is not None:
+                    to_account = choose_account(customer)
+
+                    if to_account is None:
+                        pass
+                    elif from_account is to_account:
+                        print("\nYou cannot transfer money from/to the same account!.")
+                    else:
+                        transfer_amount = read_amount("How much would you like to transfer? ")
+                        try:
+                            bank.transfer(from_account, to_account, transfer_amount)
+                            print(f"Transferred amount. New balances: {from_account.balance}, {to_account.balance}")
+                        except (ValueError, BankError) as e:
+                            print(e)
+
             case "5":
                 print("\nExiting dashboard...")
                 break
+
             case _:
                 print("\nInvalid choice. Please try again.")
 
@@ -200,6 +237,33 @@ def goodbye():
     print("\n---------------------------------")
     print("--Thank you for using AFS Bank!--")
     print("---------------------------------")
+
+#-----------------------helper functions------------------------#
+def choose_account(customer: Customer) -> Account | None:
+    if not customer.accounts:
+        print("You have not created any accounts yet.")
+        return None
+
+    print("\nAccounts available:")
+    for account in customer.accounts:
+        print(account)
+
+    chosen_account_number = int(input("\nPlease enter your account number: "))
+    for account in customer.accounts:
+        if account.account_number == chosen_account_number:
+            return account
+
+    print("\nAccount number not found.")
+    return None
+
+def read_amount(prompt: str) -> Decimal:
+    while True:
+        text = input(prompt)
+        try:
+            return Decimal(text)
+        except InvalidOperation:
+            print("Invalid input. Please try again.")
+
 
 if __name__ == '__main__':
     main()
