@@ -71,10 +71,11 @@ def admin_dashboard(bank: Bank, admin: Admin):
         choice = input("\nWhat would you like to do?\n"
                        "1) View all customers\n"
                        "2) View all accounts\n"
-                       "3) Add a customer\n"
-                       "4) Delete a customer\n"
-                       "5) Update a customer\n"
-                       "6) Exit\n"
+                       "3) View all transactions\n"
+                       "4) Add a customer\n"
+                       "5) Delete a customer\n"
+                       "6) Update a customer\n"
+                       "7) Exit\n"
                        "Enter your choice: ")
 
         match choice:
@@ -90,6 +91,16 @@ def admin_dashboard(bank: Bank, admin: Admin):
                     print(account)
 
             case "3":
+                #Views all transactions bank-wide, regardless of customer
+                all_transactions = bank.get_transactions()
+                if not all_transactions:
+                    print("No transactions at this bank yet.")
+                else:
+                    print("\nAll transactions:")
+                    for transaction in all_transactions:
+                        print(transaction)
+
+            case "4":
                 #Adds customer based on customerID -> only if customerID doesn't exist.
                 customer_id = read_int("Please enter customer id: ")
                 try:
@@ -106,7 +117,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                     bank.add_user(new_customer)
                     print(f"\nCustomer {name}, {customer_id} added.")
 
-            case "4":
+            case "5":
                 customer_to_delete_id = read_int("Please enter customer id: ")
                 try:
                     bank.remove_customer(customer_to_delete_id)
@@ -114,7 +125,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                 except NotFoundError:
                     print("Customer does not exist.")
 
-            case "5":
+            case "6":
                 customer_id = read_int("Please enter customer id: ")
                 try:
                     customer_to_update = bank.find_customer(customer_id)
@@ -128,7 +139,8 @@ def admin_dashboard(bank: Bank, admin: Admin):
                           "2) Email\n"
                           "3) Branch ID\n"
                           "4) Username\n"
-                          "5) Password\n")
+                          "5) Password\n"
+                          "6) No update needed anymore.\n")
                     choice = input("Please enter your choice: ")
 
                     match choice:
@@ -147,10 +159,12 @@ def admin_dashboard(bank: Bank, admin: Admin):
                         case "5":
                             customer_to_update.password = input("Please enter new customer password: ")
                             print("\nCustomer updated.")
+                        case "6":
+                            print("\nNo update needed anymore.")
                         case _:
                             print("Invalid choice. Please try again.")
 
-            case "6":
+            case "7":
                 print("\nExiting dashboard...")
                 break
 
@@ -170,7 +184,8 @@ def customer_dashboard(bank: Bank, customer: Customer):
                        "2) Deposit an amount\n"
                        "3) Withdraw an amount\n"
                        "4) Transfer an amount between accounts\n"
-                       "5) Exit\n"
+                       "5) View transactions\n"
+                       "6) Exit\n"
                        "Enter your choice: ")
 
         match choice:
@@ -220,6 +235,15 @@ def customer_dashboard(bank: Bank, customer: Customer):
                             print(e)
 
             case "5":
+                customer_transactions = bank.get_transactions(customer)
+                if not customer_transactions:
+                    print("No transactions yet.")
+                else:
+                    print("\nYour transactions:")
+                    for transaction in customer_transactions:
+                        print(transaction)
+
+            case "6":
                 print("\nExiting dashboard...")
                 break
 

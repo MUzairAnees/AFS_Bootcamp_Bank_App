@@ -126,6 +126,24 @@ class Bank:
         )
         self.transactions.append(transaction)
 
+    def get_transactions(self, customer=None):
+        '''
+        Returns transactions newest first. With no customer given, returns
+        every transaction the bank has recorded (the admin view). With a
+        customer given, filters to only transactions where from_account or
+        to_account matches one of that customer's account_numbers.
+        '''
+        if customer is None:
+            matches = self.transactions
+        else:
+            account_numbers = {account.account_number for account in customer.accounts}
+            matches = [
+                transaction for transaction in self.transactions
+                if transaction.from_account in account_numbers or transaction.to_account in account_numbers
+            ]
+
+        return list(reversed(matches))
+
 #-----------------------operations-----------------------#
     def login(self, username, password):
         for user in self.users:
