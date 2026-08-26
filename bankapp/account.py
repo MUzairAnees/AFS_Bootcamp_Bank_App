@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from bankapp.exceptions import InsufficientFundsError, BankError
-
+from bankapp.exceptions import InsufficientFundsError
 
 class Account(ABC):
     '''
@@ -73,4 +72,4 @@ class CheckingAccount(Account):
         new_balance = self._balance - amount
         if new_balance < -self.OVERDRAFT_LIMIT:
             raise InsufficientFundsError("Insufficient funds. You are overdrawn by more than 500 dollars.")
-        self._balance -= amount
+        self._balance = new_balance
