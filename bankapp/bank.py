@@ -1,21 +1,24 @@
+import copy
 import random
 from decimal import Decimal
-from bankapp.account import SavingsAccount, CheckingAccount
-from bankapp.user import Customer, USERS
+from bankapp.user import Customer
 from bankapp.exceptions import NotFoundError
 from bankapp.transaction import Transaction, TransactionType
+from bankapp.seed import USERS, ACCOUNTS, BRANCHES
 
 class Bank:
     '''
     Bank():
     Directly accessible class.
     Bank object holds all the user objects in a list, all the accounts in a list,
-    and all the transaction records in a list [change collection method after].
+    all the transaction records in a list, and all the branches in a list
+    [change collection method after].
     '''
     def __init__(self):
         self.users = []
         self.accounts = []
         self.transactions = []
+        self.branches = []
 
 
 #-------------------------user--------------------------#
@@ -24,6 +27,14 @@ class Bank:
         adds a new user to users list of bank object.
         '''
         self.users.append(user)
+
+    def username_exists(self, username):
+        '''
+        Checks whether any user (Admin or Customer) already has this username.
+        Checked against all users, not just customers, since Bank.login()
+        matches against everyone regardless of type.
+        '''
+        return any(user.username == username for user in self.users)
 
     def find_customer(self, customer_id):
         '''
@@ -60,6 +71,80 @@ class Bank:
                 return account
 
         raise NotFoundError("Account not found")
+
+    def _generate_account_number(self):
+        '''
+        Generates a unique 4-digit account number.
+        Picks a random int and regenerates on collision against account_numbers
+        already present in self.accounts, so uniqueness is guaranteed rather
+        than merely likely.
+        '''
+        existing_numbers = {account.account_number for account in self.accounts}
+        while True:
+            candidate = random.randint(1000, 9999)
+            if candidate not in existing_numbers:
+                return candidate
+
+
+#------------------------branch------------------------#
+    def add_branch(self, branch):
+        '''
+        adds a new branch to branches list of bank object.
+        Used for seeding -> branches are fixed at 5 and never created at runtime.
+        '''
+        self.branches.append(branch)
+
+    def find_branch(self, branch_code):
+        '''
+        finds a branch by looping through bank obj branches list and comparing with passed param.
+        Raises NotFoundError if no branch has that code -> lets callers validate
+        admin-entered branch codes with the same try/except pattern used for
+        find_customer/find_account.
+        '''
+        for branch in self.branches:
+            if branch.branch_code == branch_code:
+                return branch
+
+        raise NotFoundError("Branch not found")
+
+    def get_branch_customers(self, branch):
+        '''
+        Returns every Customer whose branch_id matches the given branch's
+        branch_code. Each returned Customer already carries its own .accounts
+        list, so this answers "which accounts belong to this branch" too,
+        without needing to separately collect Account objects.
+        '''
+        return [
+            user for user in self.users
+            if isinstance(user, Customer) and user.branch_id == branch.branch_code
+        ]
+
+    def get_branch_transaction_volume(self, branch):
+        '''
+        Returns the total transaction volume (sum of Transaction.amount) for
+        every transaction touching an account owned by a customer at the given
+        branch. All-time total -> month/date filtering is deferred to a future
+        refactor, not implemented here.
+        '''
+        branch_customers = self.get_branch_customers(branch)
+        account_numbers = {
+            account.account_number
+            for customer in branch_customers
+            for account in customer.accounts
+        }
+        matching_transactions = [
+            transaction for transaction in self.transactions
+            if transaction.from_account in account_numbers or transaction.to_account in account_numbers
+        ]
+        return sum((transaction.amount for transaction in matching_transactions), Decimal("0"))
+
+    def get_branches_over_staff_ratio(self, limit):
+        '''
+        Returns every Branch whose staff-to-manager ratio exceeds the given
+        limit. Every branch has exactly one manager, so the ratio is just
+        branch.staff itself.
+        '''
+        return [branch for branch in self.branches if branch.staff > limit]
 
 
 #----------------------transactions-----------------------#
@@ -154,14 +239,21 @@ class Bank:
 
 #------------------------seed data-----------------------#
 def create_bank():
+    '''
+    Builds a fresh Bank from the seed data.
+    Seed lists are deep-copied so every call produces independent objects ->
+    mutating a customer/account/branch in one Bank can never leak into a
+    Bank built by a later call in the same process.
+    '''
     bank = Bank()
 
-    for user in USERS:
+    for user in copy.deepcopy(USERS):
         bank.add_user(user)
 
-    bank.add_account(SavingsAccount(1001, 97, Decimal("1000")))
-    bank.add_account(SavingsAccount(1002, 98, Decimal("99000")))
-    bank.add_account(SavingsAccount(1003, 99, Decimal("59000")))
-    bank.add_account(CheckingAccount(2001, 97, Decimal("900")))
+    for account in copy.deepcopy(ACCOUNTS):
+        bank.add_account(account)
+
+    for branch in copy.deepcopy(BRANCHES):
+        bank.add_branch(branch)
 
     return bank

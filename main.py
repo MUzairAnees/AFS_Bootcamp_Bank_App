@@ -2,6 +2,7 @@ from bankapp.bank import Bank, create_bank
 from bankapp.user import User, Customer, Admin
 from bankapp.account import *
 from bankapp.exceptions import BankError, NotFoundError
+from bankapp.branch import Branch
 from decimal import Decimal, InvalidOperation
 
 def main():
@@ -13,7 +14,7 @@ def main():
     0) Creates a bank to work with.
     1) Welcomes user -> welcome().
     2) Prompts for authorization -> login().
-    2.a) If authorization returns a specific val(stored in check var)
+    2a) If authorization returns a specific val(stored in check var)
     -> activates the related x_dashboard() -> x == admin or cust.
     3) Exits program -> goodbye().
     '''
@@ -72,10 +73,13 @@ def admin_dashboard(bank: Bank, admin: Admin):
                        "1) View all customers\n"
                        "2) View all accounts\n"
                        "3) View all transactions\n"
-                       "4) Add a customer\n"
-                       "5) Delete a customer\n"
-                       "6) Update a customer\n"
-                       "7) Exit\n"
+                       "4) View branch customers\n"
+                       "5) View branch transaction volume\n"
+                       "6) View branches over staff ratio\n"
+                       "7) Add a customer\n"
+                       "8) Delete a customer\n"
+                       "9) Update a customer\n"
+                       "10) Exit\n"
                        "Enter your choice: ")
 
         match choice:
@@ -101,23 +105,67 @@ def admin_dashboard(bank: Bank, admin: Admin):
                         print(transaction)
 
             case "4":
+                #Views all customers at a chosen branch, along with their accounts
+                branch = choose_branch(bank)
+                if branch is not None:
+                    branch_customers = bank.get_branch_customers(branch)
+                    if not branch_customers:
+                        print(f"\nNo customers at {branch.location} yet.")
+                    else:
+                        print(f"\nCustomers at {branch.location}:")
+                        for customer in branch_customers:
+                            print(customer)
+                            for account in customer.accounts:
+                                print(f"   {account}")
+
+            case "5":
+                #Views the total transaction volume (all-time) for a chosen branch
+                branch = choose_branch(bank)
+                if branch is not None:
+                    volume = bank.get_branch_transaction_volume(branch)
+                    print(f"\nTotal transaction volume at {branch.location}: {volume}")
+
+            case "6":
+                #Views every branch whose staff-to-manager ratio exceeds a given limit
+                limit = read_int("Please enter a staff ratio limit: ")
+                branches_over_limit = bank.get_branches_over_staff_ratio(limit)
+                if not branches_over_limit:
+                    print(f"\nNo branches over a staff ratio of {limit}.")
+                else:
+                    print(f"\nBranches over a staff ratio of {limit}:")
+                    for branch in branches_over_limit:
+                        print(branch)
+
+            case "7":
                 #Adds customer based on customerID -> only if customerID doesn't exist.
                 customer_id = read_int("Please enter customer id: ")
+                while customer_id <= 0:
+                    print("Customer id must be greater than 0.")
+                    customer_id = read_int("Please enter customer id: ")
                 try:
                     bank.find_customer(customer_id)
                     print("Customer ID already exists.")
                 except NotFoundError:
-                    name = input("Please enter customer name: ")
-                    email = input("Please enter customer email: ")
-                    branch_id = read_int("Please enter customer branch id: ")
-                    username = input("Please enter customer username: ")
-                    password = input("Please enter customer password: ")
+                    branch = choose_branch(bank)
+                    if branch is not None:
+                        name = input("Please enter customer name: ")
+                        email = input("Please enter customer email: ")
+                        username = input("Please enter customer username: ")
+                        while bank.username_exists(username):
+                            print("Username already taken. Please choose a different username.")
+                            username = input("Please enter customer username: ")
+                        password = input("Please enter customer password: ")
 
-                    new_customer = Customer(customer_id, name, email, branch_id, username, password)
-                    bank.add_user(new_customer)
-                    print(f"\nCustomer {name}, {customer_id} added.")
+                        new_customer = Customer(customer_id, name, email, branch.branch_code, username, password)
+                        bank.add_user(new_customer)
 
-            case "5":
+                        new_account = CheckingAccount(bank._generate_account_number(), customer_id)
+                        bank.add_account(new_account)
+
+                        print(f"\nCustomer {name}, {customer_id} added.")
+                        print(f"Checking account {new_account.account_number} created for {name}.")
+
+            case "8":
                 customer_to_delete_id = read_int("Please enter customer id: ")
                 try:
                     bank.remove_customer(customer_to_delete_id)
@@ -125,7 +173,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                 except NotFoundError:
                     print("Customer does not exist.")
 
-            case "6":
+            case "9":
                 customer_id = read_int("Please enter customer id: ")
                 try:
                     customer_to_update = bank.find_customer(customer_id)
@@ -151,11 +199,22 @@ def admin_dashboard(bank: Bank, admin: Admin):
                             customer_to_update.email = input("Please enter new customer email: ")
                             print("\nCustomer updated.")
                         case "3":
-                            customer_to_update.branch_id = read_int("Please enter new customer branch id: ")
-                            print("\nCustomer updated.")
+                            branch = choose_branch(bank)
+                            if branch is not None:
+                                if branch.branch_code == customer_to_update.branch_id:
+                                    print("\nBranch already set.")
+                                else:
+                                    customer_to_update.branch_id = branch.branch_code
+                                    print("\nCustomer updated.")
                         case "4":
-                            customer_to_update.username = input("Please enter new customer username: ")
-                            print("\nCustomer updated.")
+                            new_username = input("Please enter new customer username: ")
+                            if new_username == customer_to_update.username:
+                                print("\nUsername already set.")
+                            elif bank.username_exists(new_username):
+                                print("\nUsername already taken. Please choose a different username.")
+                            else:
+                                customer_to_update.username = new_username
+                                print("\nCustomer updated.")
                         case "5":
                             customer_to_update.password = input("Please enter new customer password: ")
                             print("\nCustomer updated.")
@@ -164,7 +223,7 @@ def admin_dashboard(bank: Bank, admin: Admin):
                         case _:
                             print("Invalid choice. Please try again.")
 
-            case "7":
+            case "10":
                 print("\nExiting dashboard...")
                 break
 
@@ -185,7 +244,8 @@ def customer_dashboard(bank: Bank, customer: Customer):
                        "3) Withdraw an amount\n"
                        "4) Transfer an amount between accounts\n"
                        "5) View transactions\n"
-                       "6) Exit\n"
+                       "6) Add an account\n"
+                       "7) Exit\n"
                        "Enter your choice: ")
 
         match choice:
@@ -218,9 +278,9 @@ def customer_dashboard(bank: Bank, customer: Customer):
                         print(e)
 
             case "4":
-                from_account = choose_account(customer)
+                from_account = choose_account(customer, header="Accounts available to withdraw from:")
                 if from_account is not None:
-                    to_account = choose_account(customer)
+                    to_account = choose_account(customer, header="Accounts available to deposit into:")
 
                     if to_account is None:
                         pass
@@ -244,6 +304,25 @@ def customer_dashboard(bank: Bank, customer: Customer):
                         print(transaction)
 
             case "6":
+                #Adds a new account for this customer -> no deletion, unlimited accounts allowed
+                account_type = input("\nWhat type of account would you like to open?\n"
+                                      "1) Savings\n"
+                                      "2) Checking\n"
+                                      "Enter your choice: ")
+
+                match account_type:
+                    case "1":
+                        new_account = SavingsAccount(bank._generate_account_number(), customer.customer_id)
+                        bank.add_account(new_account)
+                        print(f"\nSavings account {new_account.account_number} created.")
+                    case "2":
+                        new_account = CheckingAccount(bank._generate_account_number(), customer.customer_id)
+                        bank.add_account(new_account)
+                        print(f"\nChecking account {new_account.account_number} created.")
+                    case _:
+                        print("\nInvalid choice. Please try again.")
+
+            case "7":
                 print("\nExiting dashboard...")
                 break
 
@@ -261,12 +340,12 @@ def goodbye():
     print("---------------------------------")
 
 #-----------------------helper functions------------------------#
-def choose_account(customer: Customer) -> Account | None:
+def choose_account(customer: Customer, header: str = "Accounts available:") -> Account | None:
     if not customer.accounts:
         print("You have not created any accounts yet.")
         return None
 
-    print("\nAccounts available:")
+    print(f"\n{header}")
     for account in customer.accounts:
         print(account)
 
@@ -278,13 +357,33 @@ def choose_account(customer: Customer) -> Account | None:
     print("\nAccount number not found.")
     return None
 
+def choose_branch(bank: Bank) -> Branch | None:
+    print("\nBranches available:")
+    for branch in bank.branches:
+        print(f"{branch.branch_code}) {branch.location}")
+
+    chosen_branch_code = read_int("\nPlease enter branch id: ")
+    try:
+        return bank.find_branch(chosen_branch_code)
+    except NotFoundError:
+        print("\nBranch not found.")
+        return None
+
 def read_amount(prompt: str) -> Decimal:
     while True:
         text = input(prompt)
         try:
-            return Decimal(text)
+            amount = Decimal(text)
         except InvalidOperation:
             print("Invalid input. Please try again.")
+            continue
+
+        quantized = amount.quantize(Decimal("0.01"))
+        if quantized != amount:
+            print("Amounts can only have up to 2 decimal places. Please try again.")
+            continue
+
+        return quantized
 
 def read_int(prompt: str) -> int:
     while True:
