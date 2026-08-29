@@ -68,7 +68,6 @@ Seeding: startup hook during in-memory phase → script when Mongo lands. Option
 You run it, report results — no advancing until confirmed
 
 ---
-
 ## Pre-phase:
 One choice worth naming: I listed only your direct dependencies rather than the full 27-line freeze. pip resolves the transitive ones (starlette, pydantic, anyio, and the uvicorn[standard] extras like watchfiles/websockets) automatically. Far more readable and maintainable; the tradeoff is slightly less exact reproducibility than a full pin. If you'd rather have every transitive version locked, say so and I'll expand it.
 
@@ -76,3 +75,22 @@ Going forward:
 
 Development: pip install -r requirements-dev.txt
 Deployment (Module 05): pip install -r requirements.txt
+
+---
+## Phase 2 — Proposed aspect breakdown
+
+Phase 2 is the directory skeleton plus every endpoint stubbed out, so the full API shape is visible and callable before anything does real work.
+
+Aspect 1 — Directory scaffolding. Create controllers/, services/, repositories/, models/, schemas/ with __init__.py in each. No logic, no routes. Just the structure.
+
+Aspect 2 — Customers controller. Five stubbed routes, plus registering the router in main.py. This is the aspect that establishes the pattern — how a router is built, how it's mounted with the /api/v1 prefix, how stubs respond.
+
+Aspect 3 — Accounts controller. Four stubbed routes (including the standalone soft delete).
+
+Aspect 4 — Transactions controller. Five stubbed routes.
+
+Aspect 5 — Branches controller. Three stubbed routes.
+
+Each aspect gets its own test run.
+
+---
